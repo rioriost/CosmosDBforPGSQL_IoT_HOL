@@ -125,13 +125,16 @@ SELECT create_time_partitions(
 ```
 
 実行後に、\dで作成したテーブルを確認する。
+```
+\d
+```
 
 パーティションの管理については以下。
 ```
 -- パーティションの削除
-drop_old_time_partitions
+-- drop_old_time_partitions
 -- heap / columnarの切り替え
-alter_old_partitions_set_access_method
+-- alter_old_partitions_set_access_method
 ```
 
 # 2.4 パーティション管理の自動化
@@ -148,8 +151,10 @@ SELECT cron.schedule('create-partitions_sensors',
 ```
 -- ジョブの一覧
 SELECT * FROM cron.job;
+```
+```
 -- ジョブIDでジョブをスケジュールから削除
-SELECT cron.unschedule(job id);
+-- SELECT cron.unschedule(job id);
 ```
 
 # 2.5 古いパーティションの圧縮
