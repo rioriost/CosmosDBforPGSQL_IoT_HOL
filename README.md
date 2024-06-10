@@ -686,3 +686,166 @@ SELECT * FROM sensors_1day LIMIT 10;
 ```sql
 SELECT * FROM sensors_1week LIMIT 10;
 ```
+# 14 本番を模したダミーデータの生成 (optional)
+
+ステップ7以降を置き換える。本番を想定したクラスタ構成のため、コストが嵩む点に注意。
+
+## 14.1 citus.shard_countの変更
+
+CDBPGを新規にデプロイし、WorkerノードのvCPUの合計と同じcitus.shard_countを設定する。
+Coordinatorノード: 16vCPU, 512GB
+Workerノード: 16vCPU, 2TB x 4ノード
+
+Azureポータルから、Coordinatorノードのパラメータのcitus.shard_countを64 (16vCPU x 4ノード)に変更する。
+
+## 14.2 ダミーデータ用センサーマスター
+
+テーブルの作成
+```
+CREATE TABLE dummy_sensor_ms(
+    sensor_id bigint,
+    sensor_name varchar(16)
+);
+```
+
+シャードの設定
+```
+SELECT create_reference_table('dummy_sensor_ms');
+```
+
+ダミーセンサーマスターのデータの生成。ステップ7の100倍のセンサー数を想定。
+
+```
+INSERT INTO dummy_sensor_ms (
+    sensor_id, sensor_name
+)
+SELECT
+    i,
+    concat(('{SA,SB,SC,SD,SE,RA,RB,GF,GT,CL}'::text[])[ceil(random()*10)], '-', (random() * 1000000)::int % 10000)
+FROM GENERATE_SERIES(1, 102400) AS i;
+```
+
+## 14.3 ダミーデータの生成
+
+1週間分のダミーデータを生成する。
+
+```
+DO $$
+    DECLARE start_datetime timestamptz := '2024-06-01 00:00:00+00';
+    FOR dd IN 0..6 LOOP
+        FOR dh IN 0..23 LOOP
+            FOR dm IN 0..59 LOOP
+                INSERT INTO sensors (
+                    sensor_id,
+                    sensor_name,
+                    sensed_time,
+                    ingest_time,
+                    sec_00, sec_01, sec_02, sec_03, sec_04, sec_05, sec_06, sec_07, sec_08, sec_09, sec_10, sec_11, sec_12, sec_13, sec_14, sec_15, sec_16, sec_17, sec_18, sec_19, sec_20, sec_21, sec_22, sec_23, sec_24, sec_25, sec_26, sec_27, sec_28, sec_29, sec_30, sec_31, sec_32, sec_33, sec_34, sec_35, sec_36, sec_37, sec_38, sec_39, sec_40, sec_41, sec_42, sec_43, sec_44, sec_45, sec_46, sec_47, sec_48, sec_49, sec_50, sec_51, sec_52, sec_53, sec_54, sec_55, sec_56, sec_57, sec_58, sec_59
+                ) 
+                SELECT
+                    i,
+                    ms.sensor_name,
+                    date_trunc('minute', start_datetime + INTERVAL '1day' * dd + INTERVAL '1hour' * dh + INTERVAL '1minute' * dm),
+                    start_datetime + INTERVAL '1day' * dd + INTERVAL '1hour' * dh + INTERVAL '1minute' * (dm + 1),
+                    random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random()
+                FROM GENERATE_SERIES(1, 102400) AS i
+                JOIN dummy_sensor_ms ms ON ms.sensor_id = i
+                ;
+                COMMIT;
+            END LOOP;
+        END LOOP;
+    END LOOP;
+END $$;
+```
+
+## 14.4 ステップ9以降の実行
+
+pg_cronによる自動実行を設定せず、各ロールアップを手動で実行することで、実際のデータ量等を計測できる。Azureポータルからメトリックを利用する、あるいは以下のクエリーを実行する。
+
+```
+SELECT
+    pgn.nspname,
+    relname,
+    pg_size_pretty(relpages :: bigint * 8 * 1024) AS size,
+    CASE
+        WHEN relkind = 't' THEN (
+            SELECT
+                pgd.relname
+            FROM
+                pg_class pgd
+            WHERE
+                pgd.reltoastrelid = pg.oid
+        )
+        WHEN nspname = 'pg_toast'
+        AND relkind = 'i' THEN (
+            SELECT
+                pgt.relname
+            FROM
+                pg_class pgt
+            WHERE
+                SUBSTRING(
+                    pgt.relname
+                    FROM
+                        10
+                ) = REPLACE(
+                    SUBSTRING(
+                        pg.relname
+                        FROM
+                            10
+                    ),
+                    '_index',
+                    ''
+                )
+        )
+        ELSE (
+            SELECT
+                pgc.relname
+            FROM
+                pg_class pgc
+            WHERE
+                pg.reltoastrelid = pgc.oid
+        )
+    END :: varchar AS refrelname,
+    CASE
+        WHEN nspname = 'pg_toast'
+        AND relkind = 'i' THEN (
+            SELECT
+                pgts.relname
+            FROM
+                pg_class pgts
+            WHERE
+                pgts.reltoastrelid = (
+                    SELECT
+                        pgt.oid
+                    FROM
+                        pg_class pgt
+                    WHERE
+                        SUBSTRING(
+                            pgt.relname
+                            FROM
+                                10
+                        ) = REPLACE(
+                            SUBSTRING(
+                                pg.relname
+                                FROM
+                                    10
+                            ),
+                            '_index',
+                            ''
+                        )
+                )
+        )
+    END AS relidxrefrelname,
+    relfilenode,
+    relkind,
+    reltuples :: bigint,
+    relpages
+FROM
+    pg_class pg,
+    pg_namespace pgn
+WHERE
+    pg.relnamespace = pgn.oid
+    AND pgn.nspname NOT IN ('information_schema', 'pg_catalog')
+ORDER BY
+    relpages DESC;
+```
