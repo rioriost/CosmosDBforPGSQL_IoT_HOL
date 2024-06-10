@@ -455,6 +455,11 @@ CREATE OR REPLACE FUNCTION rollup_minutely() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
+作成後に実行してみる。
+```
+SELECT rollup_minutely();
+```
+
 ## 7.3 毎分ロールアップ用関数の自動実行の設定
 ```
 SELECT cron.schedule('roll_up_1min',
