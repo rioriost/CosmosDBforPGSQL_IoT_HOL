@@ -500,6 +500,11 @@ CREATE OR REPLACE FUNCTION rollup_hourly() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
+作成後に実行してみる。
+```
+SELECT rollup_hourly();
+```
+
 ## 8.3 毎時ロールアップ用関数の自動実行の設定
 
 毎時01分に実行する想定。
@@ -543,6 +548,11 @@ CREATE OR REPLACE FUNCTION rollup_daily() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
+作成後に実行してみる。
+```
+SELECT rollup_daily();
+```
+
 ## 9.3 日次ロールアップ用関数の自動実行の設定
 
 毎日午前0時10分に実行する想定。
@@ -584,6 +594,11 @@ CREATE OR REPLACE FUNCTION rollup_weekly() RETURNS void AS $$
         UPDATE latest_rollup_1week SET rolled_at = curr_rollup_time;
     END;
 $$ LANGUAGE plpgsql;
+```
+
+作成後に実行してみる。
+```
+SELECT rollup_weekly();
 ```
 
 ## 10.3 週次ロールアップ用関数の自動実行の設定
