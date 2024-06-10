@@ -574,7 +574,7 @@ INSERT INTO latest_rollup_1week VALUES ('10-10-1901');
 ```
 CREATE OR REPLACE FUNCTION rollup_weekly() RETURNS void AS $$
     DECLARE
-        curr_rollup_time timestamptz := date_trunc('day', now() - INTERVAL '1 day' * date_part('dow', sensed_at));
+        curr_rollup_time timestamptz := date_trunc('day', now());
         last_rollup_time timestamptz := rolled_at from latest_rollup_1week;
     BEGIN
         INSERT INTO sensors_1week (
