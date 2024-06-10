@@ -24,7 +24,8 @@ CDBPGの基本的な操作については、ここでは触れない。
 # 1. CDBPGのデプロイ
 ハンズオンは、2 Workerノード(4vCPUs, 512GB)をデプロイし、デフォルトのサーバーパラメーターで実施する。4vCPUではAUTO_VACUUM時に性能のインパクトが大きいため、本番では8vCPU以上を設定すること。業務時間外にAUTO_VACUUMを実行できるのであればその限りではないものの、一般にIoTのシナリオではデータ到着のシーズナリティが低いため、8vCPU以上を推奨する。
 
-# 2. RAWデータテーブルの作成
+# 2. RAWデータテーブル
+## 2.1 テーブルの作成
 sensor_nameをマスターに分離することも考えられる。ダミーデータではマスターを使って、複合ユニーク制約を模している。
 
 sensor_idとsensor_nameは複合ユニーク制約のはずだが、ここでは実装しない。UNIQUE(sensor_id, sensor_name)
@@ -98,12 +99,12 @@ CREATE TABLE sensors(
 ) PARTITION BY RANGE (sensed_at);
 ```
 
-# 2.1 インデックスの作成
+## 2.1 インデックスの作成
 ```
 CREATE INDEX sensor_name_index ON sensors (sensor_name);
 ```
 
-# 2.2 シャードの設定
+## 2.2 シャードの設定
 ```
 SELECT create_distributed_table('sensors', 'sensor_id');
 ```
@@ -113,7 +114,7 @@ SELECT create_distributed_table('sensors', 'sensor_id');
 SELECT * FROM citus_shards;
 ```
 
-# 2.3 パーティションの設定
+## 2.3 パーティションの設定
 
 毎時も可能だが、パーティション数が多くなりすぎる可能性があるため、総データ容量、データのボリューム、データライフサイクルを勘案して決定すべし。
 ```
@@ -130,6 +131,7 @@ SELECT create_time_partitions(
 ```
 
 パーティションの管理については以下。
+7日分のパーティションを作成
 ```
 -- パーティションの削除
 -- drop_old_time_partitions
@@ -137,7 +139,8 @@ SELECT create_time_partitions(
 -- alter_old_partitions_set_access_method
 ```
 
-# 2.4 パーティション管理の自動化
+## 2.4 パーティション管理の自動化
+7日分のパーティションの作成の自動化
 ```
 SELECT cron.schedule('create-partitions_sensors',
     '@daily',
@@ -157,7 +160,7 @@ SELECT * FROM cron.job;
 -- SELECT cron.unschedule(job id);
 ```
 
-# 2.5 古いパーティションの圧縮
+5日より古いパーティションの圧縮
 ```
 SELECT cron.schedule('compress-partitions_sensors',
     '@daily',
@@ -166,7 +169,8 @@ SELECT cron.schedule('compress-partitions_sensors',
 );
 ```
 
-# 3 毎分ロールアップ用テーブルの作成
+# 3 毎分ロールアップ用テーブル
+## 3.1 テーブルの作成
 ```
 CREATE TABLE sensors_1min(
     sensor_id bigint,
@@ -179,17 +183,18 @@ CREATE TABLE sensors_1min(
 ) PARTITION BY RANGE (sensed_at);
 ```
 
-# 3.2 インデックスの作成
+## 3.2 インデックスの作成
 ```
 CREATE INDEX sensor_name_1min_index ON sensors_1min (sensor_name);
 ```
 
-# 3.3 シャードの設定
+## 3.3 シャードの設定
 ```
 SELECT create_distributed_table('sensors_1min', 'sensor_id');
 ```
 
-# 3.4 パーティションの設定
+## 3.4 パーティションの設定
+7日分のパーティションを作成
 ```
 SELECT create_time_partitions(
     table_name         := 'sensors_1min',
@@ -198,7 +203,8 @@ SELECT create_time_partitions(
 );
 ```
 
-# 3.5 パーティション管理の自動化
+## 3.5 パーティション管理の自動化
+7日分のパーティションの作成の自動化
 ```
 SELECT cron.schedule('create-partitions_sensors_1min',
     '@daily',
@@ -208,7 +214,7 @@ SELECT cron.schedule('create-partitions_sensors_1min',
 );
 ```
 
-# 3.6 古いパーティションの圧縮
+5日より古いパーティションの圧縮
 ```
 SELECT cron.schedule('compress-partitions_sensors_1min',
     '@daily',
@@ -217,7 +223,8 @@ SELECT cron.schedule('compress-partitions_sensors_1min',
 );
 ```
 
-# 3.7 最後にロールアップした時間（分）の記録
+## 3.6 最後にロールアップした時間（分）の記録
+テーブルの作成
 ```
 CREATE TABLE latest_rollup_1min (
     rolled_at timestamptz PRIMARY KEY,
@@ -225,7 +232,8 @@ CREATE TABLE latest_rollup_1min (
 );
 ```
 
-# 4 毎時ロールアップ用テーブルの作成
+# 4 毎時ロールアップ用テーブル
+## 4.1 テーブルの作成
 ```
 CREATE TABLE sensors_1hour(
     sensor_id bigint,
@@ -238,17 +246,18 @@ CREATE TABLE sensors_1hour(
 ) PARTITION BY RANGE (sensed_at);
 ```
 
-# 4.1 インデックスの作成
+## 4.2 インデックスの作成
 ```
 CREATE INDEX sensor_name_1hour_index ON sensors_1hour (sensor_name);
 ```
 
-# 4.2 シャードの設定
+## 4.3 シャードの設定
 ```
 SELECT create_distributed_table('sensors_1hour', 'sensor_id');
 ```
 
-# 4.3 パーティションの設定
+## 4.4 パーティションの設定
+7日分のパーティションを作成
 ```
 SELECT create_time_partitions(
     table_name         := 'sensors_1hour',
@@ -257,7 +266,8 @@ SELECT create_time_partitions(
 );
 ```
 
-# 4.4 パーティション管理の自動化
+## 4.5 パーティション管理の自動化
+7日分のパーティションの作成の自動化
 ```
 SELECT cron.schedule('create-partitions_sensors_1hour',
     '@daily',
@@ -267,7 +277,7 @@ SELECT cron.schedule('create-partitions_sensors_1hour',
 );
 ```
 
-# 4.5 古いパーティションの圧縮
+5日より古いパーティションの圧縮
 ```
 SELECT cron.schedule('compress-partitions_sensors_1hour',
     '@daily',
@@ -276,7 +286,8 @@ SELECT cron.schedule('compress-partitions_sensors_1hour',
 );
 ```
 
-# 4.6 最後にロールアップした時間（時）の記録
+## 4.6 最後にロールアップした時間（時）の記録
+テーブルの作成
 ```
 CREATE TABLE latest_rollup_1hour (
     rolled_at timestamptz PRIMARY KEY,
@@ -284,7 +295,8 @@ CREATE TABLE latest_rollup_1hour (
 );
 ```
 
-# 5 日次ロールアップ用テーブルの作成
+# 5 日次ロールアップ用テーブル
+## 5.1 テーブルの作成
 ```
 CREATE TABLE sensors_1day(
     sensor_id bigint,
@@ -297,17 +309,18 @@ CREATE TABLE sensors_1day(
 ) PARTITION BY RANGE (sensed_at);
 ```
 
-# 5.1 インデックスの作成
+## 5.2 インデックスの作成
 ```
 CREATE INDEX sensor_name_1day_index ON sensors_1day (sensor_name);
 ```
 
-# 5.2 シャードの設定
+## 5.3 シャードの設定
 ```
 SELECT create_distributed_table('sensors_1day', 'sensor_id');
 ```
 
-# 5.3 パーティションの設定
+## 5.4 パーティションの設定
+7日分のパーティションを作成
 ```
 SELECT create_time_partitions(
     table_name         := 'sensors_1day',
@@ -316,7 +329,8 @@ SELECT create_time_partitions(
 );
 ```
 
-# 5.4 パーティション管理の自動化
+## 5.5 パーティション管理の自動化
+7日分のパーティションの作成の自動化
 ```
 SELECT cron.schedule('create-partitions_sensors_1day',
     '@daily',
@@ -326,7 +340,7 @@ SELECT cron.schedule('create-partitions_sensors_1day',
 );
 ```
 
-# 5.5 古いパーティションの圧縮
+5日より古いパーティションの圧縮
 ```
 SELECT cron.schedule('compress-partitions_sensors_1day',
     '@daily',
@@ -335,7 +349,8 @@ SELECT cron.schedule('compress-partitions_sensors_1day',
 );
 ```
 
-# 5.6 最後にロールアップした時間（日）の記録
+## 5.6 最後にロールアップした時間（日）の記録
+テーブルの作成
 ```
 CREATE TABLE latest_rollup_1day (
     rolled_at timestamptz PRIMARY KEY,
@@ -343,7 +358,8 @@ CREATE TABLE latest_rollup_1day (
 );
 ```
 
-# 6 週次ロールアップ用テーブルの作成
+# 6 週次ロールアップ用テーブル
+## 6.1 テーブルの作成
 ```
 CREATE TABLE sensors_1week(
     sensor_id bigint,
@@ -356,17 +372,18 @@ CREATE TABLE sensors_1week(
 ) PARTITION BY RANGE (sensed_at);
 ```
 
-# 6.1 インデックスの作成
+## 6.2 インデックスの作成
 ```
 CREATE INDEX sensor_name_1week_index ON sensors_1week (sensor_name);
 ```
 
-# 6.2 シャードの設定
+## 6.3 シャードの設定
 ```
 SELECT create_distributed_table('sensors_1week', 'sensor_id');
 ```
 
-# 6.3 パーティションの設定
+## 6.4 パーティションの設定
+2週分のパーティションを作成
 ```
 SELECT create_time_partitions(
     table_name         := 'sensors_1week',
@@ -375,7 +392,8 @@ SELECT create_time_partitions(
 );
 ```
 
-# 6.4 パーティション管理の自動化
+## 6.5 パーティション管理の自動化
+2週分のパーティションの作成の自動化
 ```
 SELECT cron.schedule('create-partitions_sensors_1week',
     '@weekly',
@@ -385,7 +403,7 @@ SELECT cron.schedule('create-partitions_sensors_1week',
 );
 ```
 
-# 6.5 古いパーティションの圧縮
+5週より古いパーティションの圧縮
 ```
 SELECT cron.schedule('compress-partitions_sensors_1week',
     '@weekly',
@@ -394,7 +412,8 @@ SELECT cron.schedule('compress-partitions_sensors_1week',
 );
 ```
 
-# 6.6 最後にロールアップした時間（週）の記録
+## 6.6 最後にロールアップした時間（週）の記録
+テーブルの作成
 ```
 CREATE TABLE latest_rollup_1week (
     rolled_at timestamptz PRIMARY KEY,
@@ -402,14 +421,13 @@ CREATE TABLE latest_rollup_1week (
 );
 ```
 
-# 7 毎分ロールアップ用関数の作成
-
-最終ロールアップ日時を初期化しておく。
+# 7 毎分ロールアップ用関数
+## 7.1 最終ロールアップ日時の初期化
 ```
 INSERT INTO latest_rollup_1min VALUES ('10-10-1901');
 ```
 
-関数を作成する。
+## 7.2 関数の作成
 ```
 CREATE OR REPLACE FUNCTION rollup_minutely() RETURNS void AS $$
     DECLARE
@@ -437,7 +455,7 @@ CREATE OR REPLACE FUNCTION rollup_minutely() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
-# 7.1 毎分ロールアップ用関数の自動実行の設定
+## 7.3 毎分ロールアップ用関数の自動実行の設定
 ```
 SELECT cron.schedule('roll_up_1min',
     '* * * * *',
@@ -445,10 +463,14 @@ SELECT cron.schedule('roll_up_1min',
 );
 ```
 
-# 8 毎時ロールアップ用関数の作成
+# 8 毎時ロールアップ用関数
+## 8.1 最終ロールアップ日時の初期化
 ```
 INSERT INTO latest_rollup_1hour VALUES ('10-10-1901');
+```
 
+## 8.2 関数の作成
+```
 CREATE OR REPLACE FUNCTION rollup_hourly() RETURNS void AS $$
     DECLARE
         curr_rollup_time timestamptz := date_trunc('hour', now());
@@ -473,7 +495,7 @@ CREATE OR REPLACE FUNCTION rollup_hourly() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
-# 8.1 毎時ロールアップ用関数の自動実行の設定
+## 8.3 毎時ロールアップ用関数の自動実行の設定
 
 毎時01分に実行する想定。
 
@@ -484,10 +506,14 @@ SELECT cron.schedule('roll_up_1hour',
 );
 ```
 
-# 9 日次ロールアップ用関数の作成
+# 9 日次ロールアップ用関数
+## 9.1 最終ロールアップ日時の初期化
 ```
 INSERT INTO latest_rollup_1day VALUES ('10-10-1901');
+```
 
+## 9.2 関数の作成
+```
 CREATE OR REPLACE FUNCTION rollup_daily() RETURNS void AS $$
     DECLARE
         curr_rollup_time timestamptz := date_trunc('day', now());
@@ -512,7 +538,7 @@ CREATE OR REPLACE FUNCTION rollup_daily() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
-# 9.1 日次ロールアップ用関数の自動実行の設定
+## 9.3 日次ロールアップ用関数の自動実行の設定
 
 毎日午前0時10分に実行する想定。
 
@@ -523,10 +549,14 @@ SELECT cron.schedule('roll_up_1day',
 );
 ```
 
-# 10 週次ロールアップ用関数の作成
+# 10 週次ロールアップ用関数
+## 10.1 最終ロールアップ日時の初期化
 ```
 INSERT INTO latest_rollup_1week VALUES ('10-10-1901');
+```
 
+## 10.2 関数の作成
+```
 CREATE OR REPLACE FUNCTION rollup_weekly() RETURNS void AS $$
     DECLARE
         curr_rollup_time timestamptz := date_trunc('day', now() - INTERVAL '1 day' * date_part('dow', sensed_at));
@@ -551,7 +581,7 @@ CREATE OR REPLACE FUNCTION rollup_weekly() RETURNS void AS $$
 $$ LANGUAGE plpgsql;
 ```
 
-# 10.1 週次ロールアップ用関数の自動実行の設定
+## 10.3 週次ロールアップ用関数の自動実行の設定
 
 毎週月曜午前2時00分に実行する想定。
 
@@ -562,8 +592,8 @@ SELECT cron.schedule('roll_up_1week',
 );
 ```
 
-# 11 ダミーデータ用センサーマスターの作成
-
+# 11 ダミーデータ用センサーマスター
+# 11.1 テーブルの作成
 以下はここまでの設定で正しく動作するかを確認する手順。本番データはファイルなどでシステムに到着し、Storage TriggerなどでキックされたFunctions等がingestする。sensor_idやsensor_nameは元データの段階で一意性制約を満たしている想定だが、テーブル定義として制約を課しておくことに問題はない。
 
 ```
@@ -573,15 +603,15 @@ CREATE TABLE dummy_sensor_ms(
 );
 ```
 
-# 11.1 シャードの設定
+## 11.2 シャードの設定
 
-マスターデータなので、Referenceテーブルとする。
+マスターデータなので、Referenceテーブルとする。Referenceテーブルは、Distributedテーブルの亜種で、同一のシャードが全てのノードに置かれる。
 
 ```
 SELECT create_reference_table('dummy_sensor_ms');
 ```
 
-# 11.2 ダミーセンサーマスターのデータの生成
+## 11.3 ダミーセンサーマスターのデータの生成
 
 次のステップのセンサー数（generate_seriesの引数）と揃えること。
 
