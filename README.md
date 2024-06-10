@@ -701,7 +701,7 @@ Azureポータルから、Coordinatorノードのパラメータのcitus.shard_c
 ## 14.2 ダミーデータ用センサーマスター
 
 テーブルの作成
-```
+```sql
 CREATE TABLE dummy_sensor_ms(
     sensor_id bigint,
     sensor_name varchar(16)
@@ -709,13 +709,13 @@ CREATE TABLE dummy_sensor_ms(
 ```
 
 シャードの設定
-```
+```sql
 SELECT create_reference_table('dummy_sensor_ms');
 ```
 
 ダミーセンサーマスターのデータの生成。ステップ7の100倍のセンサー数を想定。
 
-```
+```sql
 INSERT INTO dummy_sensor_ms (
     sensor_id, sensor_name
 )
@@ -729,7 +729,7 @@ FROM GENERATE_SERIES(1, 102400) AS i;
 
 1週間分のダミーデータを生成する。
 
-```
+```sql
 DO $$
     DECLARE start_datetime timestamptz := '2024-06-01 00:00:00+00';
     FOR dd IN 0..6 LOOP
@@ -762,7 +762,7 @@ END $$;
 
 pg_cronによる自動実行を設定せず、各ロールアップを手動で実行することで、実際のデータ量等を計測できる。Azureポータルからメトリックを利用する、あるいは以下のクエリーを実行する。
 
-```
+```sql
 SELECT
     pgn.nspname,
     relname,
