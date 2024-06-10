@@ -663,6 +663,26 @@ SELECT cron.schedule('roll_up_1week',
 ```
 
 # 13 集約の定期処理のチェック
+## 13.1 毎分のロールアップ
 ```sql
 SELECT * FROM sensors_1min LIMIT 10;
+```
+
+## 13.2 毎時のロールアップ
+```sql
+SELECT * FROM sensors_1hour LIMIT 10;
+```
+毎分のロールアップが実行済みであれば、毎時ロールアップ関数を手動で実行すれば動作が確認できる。以下、日次、週次についても同様。
+```sql
+SELECT rollup_hourly();
+```
+
+## 13.3 日次のロールアップ
+```sql
+SELECT * FROM sensors_1day LIMIT 10;
+```
+
+## 13.4 週次のロールアップ
+```sql
+SELECT * FROM sensors_1week LIMIT 10;
 ```
