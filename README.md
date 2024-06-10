@@ -29,7 +29,7 @@ sensor_nameをマスターに分離することも考えられる。ダミーデ
 
 sensor_idとsensor_nameは複合ユニーク制約のはずだが、ここでは実装しない。UNIQUE(sensor_id, sensor_name)
 
-00〜59秒のデータがカラムに分離しているのは、columnar storageにおける圧縮率向上のため。array型でも同じようなデータが並ぶのであれば、array型で定義しても良い。その場合、後段のaggregationにおけるUNNEST処理などが変わるので注意。
+00〜59秒のデータがカラムに分離しているのは、columnar storageにおける圧縮率向上のため。array型でも同じようなデータが並ぶのであれば、array型で定義しても良い。その場合、後段のaggregationにおけるUNNEST処理などが変わるので注意。CREATE TABLE実行時にUSING COLUMNARキーワードを付加することで、HEAPをそもそも用いない構成も可能。圧縮による性能向上はかなり絶大なので、パフォーマンスベンチマークを実施してから決定しても良い。
 ```
 CREATE TABLE sensors(
     sensor_id bigint PRIMARY KEY,
