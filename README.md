@@ -174,7 +174,7 @@ SELECT cron.schedule('compress-partitions_sensors',
 ```
 CREATE TABLE sensors_1min(
     sensor_id bigint,
-    sensor_name text,
+    sensor_name varchar(16),
     sensed_at timestamptz,
     avg real,
     min real,
@@ -237,7 +237,7 @@ CREATE TABLE latest_rollup_1min (
 ```
 CREATE TABLE sensors_1hour(
     sensor_id bigint,
-    sensor_name text,
+    sensor_name varchar(16),
     sensed_at timestamptz,
     avg real,
     min real,
@@ -300,7 +300,7 @@ CREATE TABLE latest_rollup_1hour (
 ```
 CREATE TABLE sensors_1day(
     sensor_id bigint,
-    sensor_name text,
+    sensor_name varchar(16),
     sensed_at timestamptz,
     avg real,
     min real,
@@ -363,7 +363,7 @@ CREATE TABLE latest_rollup_1day (
 ```
 CREATE TABLE sensors_1week(
     sensor_id bigint,
-    sensor_name text,
+    sensor_name varchar(16),
     sensed_at timestamptz,
     avg real,
     min real,
