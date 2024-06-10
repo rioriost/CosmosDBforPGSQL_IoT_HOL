@@ -4,7 +4,7 @@
 
 センサーがグローバルに配置されている場合、Cosmos DB for PostgreSQL (CDBPG)はグローバル分散に対応しないため、Cosmos DB for NoSQLを用いてMulti-region Writeを実装すべきだが、Cosmos DB for NoSQLで受信後、ChangeFeedによりキックされたFunction等で特定の（例えばAzure東日本）に配置されたCDBPGに集約するシナリオは十分に考えられるし、実際にそのようなデザインのシステムは本番稼働している。
 
-ハンズオンでは最小構成のクラスタをデプロイするが、センサーの数が増えた場合にすべきことは以下の点に注意が必要。
+ハンズオンでは最小構成のクラスタをデプロイするが、センサーの数が増えた場合には以下の点に注意が必要。
 
 サーバーパラメータのcitus.shard_countをデフォルトの32から、クラスタを構成するWorkerノードの総vCPU数と揃える。例えば、16vCPUのWorkerが10ノード存在するなら、citus.shard_countは160もしくは、それ以上の数値を設定する。
 
