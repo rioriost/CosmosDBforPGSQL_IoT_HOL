@@ -691,7 +691,7 @@ SELECT * FROM sensors_1week LIMIT 10;
 ステップ7以降を置き換える。本番を想定したクラスタ構成のため、コストが嵩む点に注意。
 
 ただし、過去のデータを格納する場合には古いパーティションを用意しておく必要があるため、各テーブルのパーティションを以下のように作成しておく。
-```
+```sql
 SELECT create_time_partitions(
     table_name         := 'sensors',
     partition_interval := '1 day',
