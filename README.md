@@ -493,7 +493,7 @@ CREATE OR REPLACE FUNCTION rollup_hourly() RETURNS void AS $$
             FROM sensors_1min
             WHERE date_trunc('hour', sensed_at) <@
             tstzrange(last_rollup_time, curr_rollup_time, '(]')
-            GROUP BY sensor_id;
+            GROUP BY sensor_id, sensor_name, sensed_at;
 
         UPDATE latest_rollup_1hour SET rolled_at = curr_rollup_time;
     END;
@@ -536,7 +536,7 @@ CREATE OR REPLACE FUNCTION rollup_daily() RETURNS void AS $$
             FROM sensors_1hour
             WHERE date_trunc('day', sensed_at) <@
             tstzrange(last_rollup_time, curr_rollup_time, '(]')
-            GROUP BY sensor_id;
+            GROUP BY sensor_id, sensor_name, sensed_at;
 
         UPDATE latest_rollup_1day SET rolled_at = curr_rollup_time;
     END;
@@ -579,7 +579,7 @@ CREATE OR REPLACE FUNCTION rollup_weekly() RETURNS void AS $$
             FROM sensors_1day
             WHERE date_trunc('day', sensed_at) <@
             tstzrange(last_rollup_time, curr_rollup_time, '(]')
-            GROUP BY sensor_id;
+            GROUP BY sensor_id, sensor_name, sensed_at;
 
         UPDATE latest_rollup_1week SET rolled_at = curr_rollup_time;
     END;
