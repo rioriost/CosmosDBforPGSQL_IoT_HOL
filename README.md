@@ -762,8 +762,8 @@ DO $$
             GENERATE_SERIES(1, 102400) AS id
         JOIN dummy_sensor_ms ms ON ms.sensor_id = id
         ;
-        COMMIT;
-    END;
+    COMMIT;
+END;
 $$;
 ```
 
