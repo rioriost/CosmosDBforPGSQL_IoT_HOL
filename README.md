@@ -2,7 +2,7 @@
 
 工場や発電所、スマートビルディングなど、数万個あるセンサーが毎秒記録したデータを毎分、60秒間分をまとめて送出してくるシナリオを想定している。
 
-センサーがグローバルに配置されている場合、Cosmos DB for PostgreSQL (CDBPG)はグローバル分散に対応しないため、Cosmos DB for NoSQLを用いてMulti-region Writeを実装すべきだが、Cosmos DB for NoSQLで受信後、ChangeFeedによりキックされたFunction等で特定の（例えばAzure東日本）に配置されたCDBPGに集約するシナリオは十分に考えられるし、実際にそのようなデザインのシステムは本番稼働している。
+センサーがグローバルに配置されている場合、Cosmos DB for PostgreSQL (CDBPG)はグローバル分散に対応しないため、Cosmos DB for NoSQLを用いてMulti-region Writeを実装すべきだが、Cosmos DB for NoSQLで受信後、ChangeFeedによりキックされたFunction等で特定のリージョン（例えばAzure東日本）に配置されたCDBPGに集約するシナリオは十分に考えられるし、実際にそのようなデザインのシステムは本番稼働している。
 
 ハンズオンでは最小構成のクラスタをデプロイするが、センサーの数が増えた場合には以下の点に注意が必要。
 
