@@ -2,7 +2,7 @@
 
 It envisions a scenario in which tens of thousands of sensors record data per second, such as factories, power plants, and smart buildings, and transmit data for 60 seconds every minute.
 
-If the sensors are globally deployed, Cosmos DB for PostgreSQL (CDBPG) does not support global distribution, so you should implement Multi-region Write using Cosmos DB for NoSQL. It is quite conceivable that a scenario in which a CDBPG is placed in a specific (e.g., Azure Japan East) with a Function kicked by ChangeFeed, etc., is actually in production.
+If the sensors are globally deployed, Cosmos DB for PostgreSQL (CDBPG) does not support global distribution, so you should implement Multi-region Write using Cosmos DB for NoSQL. It is quite conceivable that a scenario in which a CDBPG is placed in a specific region (e.g., Azure Japan East) with a Function kicked by ChangeFeed, etc., is actually in production.
 
 In hands-on, deploy a cluster with the minimum configuration, but if the number of sensors increases, the following points should be noted.
 
