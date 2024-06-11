@@ -737,7 +737,7 @@ FROM GENERATE_SERIES(1, 102400) AS i;
 
 ## 14.3 ダミーデータの生成
 
-1週間分のダミーデータを生成する。RAWデータは102,400センサー x 604,800秒 = 61,931,520,000、約620億レコードとなる。
+1日分のダミーデータを生成する。RAWデータは102,400センサー x 86,400秒 = 8,847,360,000、約88億レコードとなる。
 
 ```sql
 DO $$
@@ -752,11 +752,10 @@ DO $$
         SELECT
             id,
             ms.sensor_name,
-            concat('2024-06-', to_char(dd, 'FM00'), ' ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz,
-            concat('2024-06-', to_char(dd, 'FM00'), ' ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz + INTERVAL '1 minute',
+            concat('2024-06-01 ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz,
+            concat('2024-06-01 ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz + INTERVAL '1 minute',
             random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random()
         FROM
-            GENERATE_SERIES(1, 7) AS dd,
             GENERATE_SERIES(0, 23) AS dh,
             GENERATE_SERIES(0, 59) AS dm,
             GENERATE_SERIES(1, 102400) AS id
@@ -765,6 +764,23 @@ DO $$
     COMMIT;
 END;
 $$;
+```
+
+また、ファイルに出力する方法もある。
+```sql
+\COPY
+    (SELECT
+        id,
+        ms.sensor_name,
+        concat('2024-06-01 ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz,
+        concat('2024-06-01 ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz + INTERVAL '1 minute',
+        random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random()
+    FROM
+        GENERATE_SERIES(0, 23) AS dh,
+        GENERATE_SERIES(0, 59) AS dm,
+        GENERATE_SERIES(1, 102400) AS id
+    JOIN dummy_sensor_ms ms ON ms.sensor_id = id)
+TO dummy_data.csv WITH CSV;
 ```
 
 ## 14.4 ステップ9以降の実行
