@@ -785,6 +785,11 @@ END;
 $$;
 ```
 
+Check that there is a sufficient load during data generation.
+If the load is low, multiple queries to generate data should be executed in parallel, and if the CPU is not properly loaded, it will take extra time.
+For example, for a single query (before 7PM in the graph) and a query with 7 parallels (after 7PM), we can see that 7 parallels is a good size.
+![](chart.png)
+
 There is also a way to output to a file.
 However, it should be noted that if you generate one week's worth of data with this number of sensors, the file size will be about 1 TB.
 ```sql
