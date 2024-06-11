@@ -737,36 +737,39 @@ FROM GENERATE_SERIES(1, 102400) AS i;
 
 ## 14.3 ダミーデータの生成
 
-1日分のダミーデータを生成する。RAWデータは102,400センサー x 86,400秒 = 8,847,360,000、約88億レコードとなる。
+1週間分のダミーデータを生成する。RAWデータは102,400センサー x 604,800秒 = 61,931,520,000、約620億レコードとなる。全てをgenerate_serialで実行しないのは、途中でCOMMITしないとout of memoryになるため。
 
 ```sql
 DO $$
     BEGIN
-        INSERT INTO sensors (
-            sensor_id,
-            sensor_name,
-            sensed_time,
-            ingest_time,
-            sec_00, sec_01, sec_02, sec_03, sec_04, sec_05, sec_06, sec_07, sec_08, sec_09, sec_10, sec_11, sec_12, sec_13, sec_14, sec_15, sec_16, sec_17, sec_18, sec_19, sec_20, sec_21, sec_22, sec_23, sec_24, sec_25, sec_26, sec_27, sec_28, sec_29, sec_30, sec_31, sec_32, sec_33, sec_34, sec_35, sec_36, sec_37, sec_38, sec_39, sec_40, sec_41, sec_42, sec_43, sec_44, sec_45, sec_46, sec_47, sec_48, sec_49, sec_50, sec_51, sec_52, sec_53, sec_54, sec_55, sec_56, sec_57, sec_58, sec_59
-        ) 
-        SELECT
-            id,
-            ms.sensor_name,
-            concat('2024-06-01 ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz,
-            concat('2024-06-01 ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz + INTERVAL '1 minute',
-            random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random()
-        FROM
-            GENERATE_SERIES(0, 23) AS dh,
-            GENERATE_SERIES(0, 59) AS dm,
-            GENERATE_SERIES(1, 102400) AS id
-        JOIN dummy_sensor_ms ms ON ms.sensor_id = id
-        ;
-    COMMIT;
+        FOR dd in 1..7 LOOP
+            FOR dh in 0..23 LOOP
+                INSERT INTO sensors (
+                    sensor_id,
+                    sensor_name,
+                    sensed_time,
+                    ingest_time,
+                    sec_00, sec_01, sec_02, sec_03, sec_04, sec_05, sec_06, sec_07, sec_08, sec_09, sec_10, sec_11, sec_12, sec_13, sec_14, sec_15, sec_16, sec_17, sec_18, sec_19, sec_20, sec_21, sec_22, sec_23, sec_24, sec_25, sec_26, sec_27, sec_28, sec_29, sec_30, sec_31, sec_32, sec_33, sec_34, sec_35, sec_36, sec_37, sec_38, sec_39, sec_40, sec_41, sec_42, sec_43, sec_44, sec_45, sec_46, sec_47, sec_48, sec_49, sec_50, sec_51, sec_52, sec_53, sec_54, sec_55, sec_56, sec_57, sec_58, sec_59
+                ) 
+                SELECT
+                    id,
+                    ms.sensor_name,
+                    concat('2024-06-', to_char(dd, 'FM00'), ' ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz,
+                    concat('2024-06-', to_char(dd, 'FM00'), ' ', to_char(dh, 'FM00'), ':', to_char(dm, 'FM00'), ':00+00')::timestamptz + INTERVAL '1 minute',
+                    random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random()
+                FROM
+                    GENERATE_SERIES(0, 59) AS dm,
+                    GENERATE_SERIES(1, 102400) AS id
+                JOIN dummy_sensor_ms ms ON ms.sensor_id = id
+                ;
+                COMMIT;
+            END LOOP;
+        END LOOP;
 END;
 $$;
 ```
 
-また、ファイルに出力する方法もある。
+また、ファイルに出力する方法もある。ただし、このセンサー数で1週間分のデータを生成すると、ファイルサイズが1TB程度になるため注意が必要。
 ```sql
 \COPY
     (SELECT
