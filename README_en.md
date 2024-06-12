@@ -6,14 +6,12 @@ If the sensors are globally deployed, Cosmos DB for PostgreSQL (CDBPG) does not 
 
 In hands-on, deploy a cluster with the minimum configuration, but if the number of sensors increases, the following points should be noted.
 
-Align the citus.shard_count of the server parameter from the default of 32 to the total number of vCPUs of the worker nodes that make up the cluster.
-For example, if there are 10 nodes of 16vCPU workers, the citus.shard_count should be set to 160 or higher.
+Align the citus.shard_count of the server parameter from the default of 32 to the total number of vCPUs of the worker nodes that make up the cluster. For example, if there are 4 nodes of 16 vCPU workers, the citus.shard_count should be set to 64 or higher. If the citus.shard_count is left as the default, it will be as follows.
 
-1. There are 1,024 sensors, and if you use the sensor_id as a shard key as it is, as in this hands-on, you will have 1,024 shards.
-2. If the citus.shard_count is 32, the shard key is a range of 32 (dividing the range of values of the 32-bit hash into 32), and each range is assigned to a worker node, so 3.2 ranges/node = 32 shards/node.
-3. On the other hand, since the vCPU is 16, it becomes 2 shards / vCPU, and if the frequency of data arrival is high, it is considered that the performance will be insufficient.
-Considering the cache hit ratio of the CPU, 1 shard = 1 vCPU is ideal, but it is a consideration of cost.
-4. You can scale out the worker nodes (10→20 nodes) or scale up (16→32 vCPUs), but if the data size is large and the IO load is high, the general guideline is to choose scale-out and increase the number of SSDs, otherwise choose to scale up.
+1. There are 1,024 sensors, and if the sensor_id is used as a shard key as it is like this hands-on, the generated shard key is also distributed in 1024 ways.
+2. If the citus.shard_count is 32, the shard key is a range of 32 (dividing the range of values of the 32-bit hash into 32), and each range is assigned to a worker node, resulting in 8 shards/node.
+3. On the other hand, since the vCPU is 16, it will be 0.5 shards/vCPU, and one vCPU will handle two shards = processes. Since process switching occurs, the CPU cache hit ratio is low. A citus.shard_count of 64 is the appropriate size.
+4. You can scale out the worker nodes (4→8 nodes) or scale up (16→32 vCPUs), but if the data size is large and the IO load is high, the general guideline is to choose scale-out and increase the number of SSDs, otherwise choose to scale up.
 5. Increasing the number of nodes (cluster scale-out) and increasing the capacity of SSDs (storage scale-up) both improve the total IOPS, but note that neither can be scaled in.
 
 # 0. About Cosmos DB for PostgreSQL (CDBPG)
