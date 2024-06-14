@@ -476,7 +476,7 @@ BEGIN LOOP
         i,
         ms.sensor_name,
         date_trunc('minute', now() - INTERVAL '1 minute'),
-        now(),
+        clock_timestamp(),
         random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random(), random()
     FROM GENERATE_SERIES(1, 1024) AS i
     JOIN dummy_sensor_ms ms ON ms.sensor_id = i
