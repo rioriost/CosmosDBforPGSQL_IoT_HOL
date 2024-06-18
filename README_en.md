@@ -750,7 +750,7 @@ FROM GENERATE_SERIES(1, 102400) AS i;
 ## 14.3 Generate dummy data
 
 Generate dummy data for one week.
-RAW data is 102,400 sensors x 604,800 seconds = 61,931,520,000, or about 62 billion records.
+RAW data is 102,400 sensors x 102,400 minutes = 1,032,192,000, or about 1 billion records.
 The reason why you don't execute everything with generate_series() is because if you don't COMMIT in the middle, it will be out of memory.
 
 ```sql
