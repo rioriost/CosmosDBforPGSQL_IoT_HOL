@@ -801,7 +801,7 @@ SELECT logicalrelid AS name,
 
 # 15 LTTBによる折れ線グラフ用のダウンサンプリング (optional)
 
-LTTB (Largest Triangle Three Bucket)アルゴリズムによってダウンサンプリングすることで、少ないデータポイントでオリジナルデータの特徴的な形状を再現できる。LTTBには![各言語での実装がある](https://github.com/sveinn-steinarsson/flot-downsample)ものの、それらはPostgreSQLの外部で実行する必要があるため、PL/PGSQLで実装した例を示す。
+LTTB (Largest Triangle Three Bucket)アルゴリズムによってダウンサンプリングすることで、少ないデータポイントでオリジナルデータの特徴的な形状を再現できる。LTTBには[各言語での実装がある](https://github.com/sveinn-steinarsson/flot-downsample)ものの、それらはPostgreSQLの外部で実行する必要があるため、PL/PGSQLで実装した例を示す。
 
 ```sql
 CREATE OR REPLACE FUNCTION largest_triangle_three_buckets(data POINT[], threshold INT)
@@ -890,4 +890,4 @@ $$ LANGUAGE plpgsql;
 
 この関数をpg_cronで例えば毎時実行することで、3600秒のデータポイントを任意のデータポイント数にダウンサンプリングできる。生成する折れ線グラフのサイズに合わせたサンプリングを行えば、小さなデータ量で特徴的な形状を表示することが可能となる。
 
-詳細は![筆者のブログ](https://rio.st/2024/06/25/pl-pgsql%e3%81%a7%e3%83%80%e3%82%a6%e3%83%b3%e3%82%b5%e3%83%b3%e3%83%97%e3%83%aa%e3%83%b3%e3%82%b0%e3%81%97%e3%81%9f%e3%81%84/)、および![レポジトリ](https://github.com/rioriost/lttb-sql/tree/main)を参照のこと。
+詳細は[筆者のブログ](https://rio.st/2024/06/25/pl-pgsql%e3%81%a7%e3%83%80%e3%82%a6%e3%83%b3%e3%82%b5%e3%83%b3%e3%83%97%e3%83%aa%e3%83%b3%e3%82%b0%e3%81%97%e3%81%9f%e3%81%84/)、および[レポジトリ](https://github.com/rioriost/lttb-sql/tree/main)を参照のこと。
