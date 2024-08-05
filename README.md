@@ -831,7 +831,7 @@ BEGIN
     END IF;
 
     -- Initialize variables
-    bucket_size := (array_length(data, 1) - 2) / (threshold - 2);
+    bucket_size := CAST(array_length(data, 1) - 2 AS DOUBLE PRECISION) / (threshold - 2);
     -- RAISE NOTICE 'bucket_size: %', bucket_size;
 
     -- Always include the first data point
